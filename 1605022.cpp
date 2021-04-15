@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<iostream>
 #include<stack>
+#include<math.h>
 using namespace std;
 
 struct point
@@ -11,6 +12,15 @@ struct point
 struct vector
 {
     double x,y,z;
+    vector(){
+
+    }
+    vector(double xx,double yy,double zz)
+    {
+        x=xx;
+        y=yy;
+        z=zz;
+    }
 };
 
 
@@ -20,6 +30,22 @@ struct matrix
 };
 
 stack<matrix> matrixStack;
+
+
+struct vector normalizeVector(struct vector v)
+{
+    vector returnVec;
+    double vectorValue=sqrt(pow(v.x,2)+pow(v.y,2)+pow(v.z,2));
+    returnVec.x=v.x/vectorValue;
+    returnVec.y=v.y/vectorValue;
+    returnVec.z=v.z/vectorValue;
+    return returnVec;
+
+
+
+
+}
+
 
 
 struct vector crossMultiply(struct vector v1,struct vector v2)
@@ -45,9 +71,15 @@ double dotMultiply(struct vector v1, struct vector v2)
 }
 
 
-struct vector rotateVector()
+struct vector rotateVector(struct vector  axis,struct vector v,double rotation_angle)
 {
-
+    vector returnVec;
+    double dotProduct=dotMultiply(axis,v);
+    vector crossProduct=crossMultiply(v,axis);
+    returnVec.x=axis.x*cos(rotation_angle)+crossProduct.x*sin(rotation_angle)+(v.x)*dotProduct*(1-cos(rotation_angle));
+    returnVec.y=axis.y*cos(rotation_angle)+crossProduct.y*sin(rotation_angle)+(v.y)*dotProduct*(1-cos(rotation_angle));
+    returnVec.z=axis.z*cos(rotation_angle)+crossProduct.z*sin(rotation_angle)+(v.z)*dotProduct*(1-cos(rotation_angle));
+    return returnVec; 
 
 }
 
@@ -103,12 +135,26 @@ matrix generateScalingMatrix(double sx,double sy,double sz)
 
 matrix generateRotationMatrix(double rotation_angle,double ax,double ay,double az)
 {
-    matrix S=generateIdentityMatrix();
-    // S.arr[0][0]=sx;
-    // S.arr[1][1]=sy;
-    // S.arr[2][2]=sz;
+    vector a(ax,ay,az);
+    vector normlized_a=normalizeVector(a);
+    matrix R=generateIdentityMatrix();
+    vector i_vector(1,0,0),j_vector(0,1,0),k_vector(0,0,1);
+    vector c1=rotateVector(i_vector,normlized_a,rotation_angle);
+    vector c2=rotateVector(j_vector,normlized_a,rotation_angle);
+    vector c3=rotateVector(k_vector,normlized_a,rotation_angle);
+    R.arr[0][0]=c1.x;
+    R.arr[1][0]=c1.y;
+    R.arr[2][0]=c1.z;
 
-    return S;
+    R.arr[0][1]=c2.x;
+    R.arr[1][1]=c2.y;
+    R.arr[2][1]=c2.z;
+
+    R.arr[0][2]=c3.x;
+    R.arr[1][2]=c3.y;
+    R.arr[2][2]=c3.z;
+
+    return R;
 
 
 
@@ -147,6 +193,19 @@ int main()
         for(int j=0;j<4;j++)
         {
            printf("%lf ",S.arr[i][j]);
+        }
+        printf("\n");
+
+    }
+
+    //testing Rotation matirx
+     matrix R=generateRotationMatrix(90,1,2.3,4);
+
+     for(int i=0;i<4;i++)
+    {
+        for(int j=0;j<4;j++)
+        {
+           printf("%lf ",R.arr[i][j]);
         }
         printf("\n");
 
