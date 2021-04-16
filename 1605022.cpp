@@ -11,6 +11,7 @@ using namespace std;
 
 ifstream in("scene.txt");
 ofstream stage1Output("stage1.txt");
+ofstream stage2Output("stage2.txt");
 
 
 void skipNFileLines(int N)
@@ -359,6 +360,17 @@ struct point transformPoint(struct point p,struct matrix m)
 
 }
 
+struct vector vectorAddition(struct vector v1,struct vector v2,int addOrSubtract)
+{
+    struct vector returnVector;
+    returnVector.x=v1.x+(addOrSubtract)*v2.x;
+    returnVector.y=v1.y+(addOrSubtract)*v2.y;
+    returnVector.z=v1.z+(addOrSubtract)*v2.z;
+    return returnVector;
+
+
+}
+
 
 
 
@@ -370,7 +382,96 @@ int main()
     matrix I=generateIdentityMatrix();
     matrixStack.push(I);
     string command;
-    skipNFileLines(4);
+   // skipNFileLines(4);
+   string fileLine;
+
+
+    getline(in,fileLine);
+    size_t pos = 0;
+    pos = fileLine.find(" ");
+    double eyex = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double eyey = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double eyez = stod(fileLine.substr(0,pos));
+
+    vector eyeVector(eyex,eyey,eyez);
+
+    getline(in,fileLine);
+    pos = fileLine.find(" ");
+    double lookx = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double looky = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double lookz = stod(fileLine.substr(0,pos));
+
+    vector lookVector(lookx,looky,lookz);
+
+
+    getline(in,fileLine);
+    pos = fileLine.find(" ");
+    double upx = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double upy = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+
+    pos = fileLine.find(" ");
+    double upz = stod(fileLine.substr(0,pos));
+
+    vector upVector(upx,upy,upz);   
+
+
+    // printVector(eyeVector);
+    // printVector(lookVector);
+    // printVector(upVector); 
+    
+    vector l=vectorAddition(lookVector,eyeVector,-1);
+    l=normalizeVector(l);
+    vector r=crossMultiply(l,upVector);
+    r=normalizeVector(r);
+    vector u=crossMultiply(r,l);
+
+    struct matrix T=generateIdentityMatrix();
+    T.arr[0][3]=-eyex;
+    T.arr[1][3]=-eyey;
+    T.arr[2][3]=-eyez;
+
+    struct matrix R;
+    R=generateIdentityMatrix();
+   // double arr[4][4]={{r.x,r.y,r.z,0},{u.x,u.y,u.z,0},{-l.x,-l.y,-l.z,0},{0,0,0,1}};
+    //R.arr=arr;
+    R.arr[0][0]=r.x;
+    R.arr[0][1]=r.y;
+    R.arr[0][2]=r.z;
+
+    R.arr[1][0]=u.x;
+    R.arr[1][1]=u.y;
+    R.arr[1][2]=u.z;
+
+    R.arr[2][0]=-l.x;
+    R.arr[2][1]=-l.y;
+    R.arr[2][2]=-l.z;
+
+    struct matrix V=matrixMultiply(R,T);   
+
+
+
+
+
+
+
+
+
 
 
 
@@ -384,7 +485,7 @@ int main()
           //  stage1Output<<"bal1"<<endl;
             string fileLine;
 
-            struct point trianglePoints[3],transformedTrianglePoints[3];
+            struct point trianglePoints[3],stage1TransformedTrianglePoints[3],stage2TransformedTrianglePoints[3];
             for(int i=0;i<3;i++)
             {
 
@@ -415,19 +516,32 @@ int main()
             {
                /// struct matrix m=matrixStack.top();
                // printMatirx(m);
-
-                
           
-                transformedTrianglePoints[i]=transformPoint(trianglePoints[i],matrixStack.top());
-                stage1Output<<transformedTrianglePoints[i].x<<" ";
-                stage1Output<<transformedTrianglePoints[i].y<<" ";
-                stage1Output<<transformedTrianglePoints[i].z<<" ";
+                stage1TransformedTrianglePoints[i]=transformPoint(trianglePoints[i],matrixStack.top());
+                stage1Output<<stage1TransformedTrianglePoints[i].x<<" ";
+                stage1Output<<stage1TransformedTrianglePoints[i].y<<" ";
+                stage1Output<<stage1TransformedTrianglePoints[i].z<<" ";
                 stage1Output<<endl;
               
                  
 
             }
             stage1Output<<endl;
+            for(int i=0;i<3;i++)
+            {
+               /// struct matrix m=matrixStack.top();
+               // printMatirx(m);
+          
+                stage2TransformedTrianglePoints[i]=transformPoint(stage1TransformedTrianglePoints[i],V);
+                stage2Output<<stage2TransformedTrianglePoints[i].x<<" ";
+                stage2Output<<stage2TransformedTrianglePoints[i].y<<" ";
+                stage2Output<<stage2TransformedTrianglePoints[i].z<<" ";
+                stage2Output<<endl;
+              
+                 
+
+            }
+            stage2Output<<endl;           
 
 
         }
