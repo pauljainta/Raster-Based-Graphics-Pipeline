@@ -12,6 +12,7 @@ using namespace std;
 ifstream in("scene.txt");
 ofstream stage1Output("stage1.txt");
 ofstream stage2Output("stage2.txt");
+ofstream stage3Output("stage3.txt");
 
 
 void skipNFileLines(int N)
@@ -354,6 +355,10 @@ struct point transformPoint(struct point p,struct matrix m)
     //printPointMatirx(transformedPointMatrix);
     struct point transformedPoint=pointFromPointMatrix(transformedPointMatrix);
 
+    transformedPoint.x/=transformedPointMatrix.arr[3][0];
+    transformedPoint.y/=transformedPointMatrix.arr[3][0];
+    transformedPoint.z/=transformedPointMatrix.arr[3][0];
+
     //printPoint(transformedPoint);
 
     return transformedPoint;
@@ -383,7 +388,7 @@ int main()
     matrixStack.push(I);
     string command;
    // skipNFileLines(4);
-   string fileLine;
+    string fileLine;
 
 
     getline(in,fileLine);
@@ -462,19 +467,55 @@ int main()
     R.arr[2][1]=-l.y;
     R.arr[2][2]=-l.z;
 
-    struct matrix V=matrixMultiply(R,T);   
+    struct matrix V=matrixMultiply(R,T); 
 
 
+    getline(in,fileLine);
+    pos = fileLine.find(" ");
+    double fovY = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
 
+    pos = fileLine.find(" ");
+    double aspectratio = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
 
+    pos = fileLine.find(" ");
+    double near = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
 
+    pos = fileLine.find(" ");
+    double far = stod(fileLine.substr(0,pos));
 
+   // cout<<fovY<<" "<<aspectratio<<" "<<near<<" "<<far;
+    double fovX=fovY*aspectratio;
+    double t = near * tan((fovY/2) * (pi/180));
+    double rr = near * tan((fovX/2) * (pi/180));
 
+    struct matrix P;//projection matrix
 
+    P.arr[0][0]=near/rr;
+    P.arr[0][1]=0;
+    P.arr[0][2]=0;
+    P.arr[0][3]=0;
 
+    P.arr[1][0]=0;
+    P.arr[1][1]=near/t;
+    P.arr[1][2]=0;
+    P.arr[1][3]=0;
 
+    P.arr[2][0]=0;
+    P.arr[2][1]=0;
+    P.arr[2][2]=-(far+near)/(far-near);
+    P.arr[2][3]=-(2*far*near)/(far-near);
 
+    P.arr[3][0]=0;
+    P.arr[3][1]=0;
+    P.arr[3][2]=-1;
+    P.arr[3][3]=0;
 
+    printMatirx(P);
+
+    
 
 
     while (true)
@@ -485,7 +526,7 @@ int main()
           //  stage1Output<<"bal1"<<endl;
             string fileLine;
 
-            struct point trianglePoints[3],stage1TransformedTrianglePoints[3],stage2TransformedTrianglePoints[3];
+            struct point trianglePoints[3],stage1TransformedTrianglePoints[3],stage2TransformedTrianglePoints[3],stage3TransformedTrianglePoints[3];
             for(int i=0;i<3;i++)
             {
 
@@ -541,7 +582,26 @@ int main()
                  
 
             }
-            stage2Output<<endl;           
+            stage2Output<<endl;  
+
+            for(int i=0;i<3;i++)
+            {
+               /// struct matrix m=matrixStack.top();
+              // printMatirx(P);
+
+                cout<<"stage 2 point\n";
+                printPoint(stage2TransformedTrianglePoints[i]);
+          
+                stage3TransformedTrianglePoints[i]=transformPoint(stage2TransformedTrianglePoints[i],P);
+                stage3Output<<stage3TransformedTrianglePoints[i].x<<" ";
+                stage3Output<<stage3TransformedTrianglePoints[i].y<<" ";
+                stage3Output<<stage3TransformedTrianglePoints[i].z<<" ";
+                stage3Output<<endl;
+              
+                 
+
+            }
+            stage3Output<<endl;         
 
 
         }
