@@ -5,14 +5,23 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
+#include<vector>
+#include<time.h>
 using namespace std;
 
 #define pi (2*acos(0.0))
 
 ifstream in("scene.txt");
+ifstream config("config.txt");
 ofstream stage1Output("stage1.txt");
 ofstream stage2Output("stage2.txt");
 ofstream stage3Output("stage3.txt");
+
+double screen_width,screen_height;
+double left_limit_of_X,right_limit_of_X,bottom_limit_of_Y,top_limit_of_Y;
+double front_limit_of_Z,rear_limit_of_Z;
+
+
 
 
 void skipNFileLines(int N)
@@ -62,13 +71,13 @@ struct point_matrix
 
 };
 
-struct vector
+struct Vec
 {
     double x,y,z;
-    vector(){
+    Vec(){
 
     }
-    vector(double xx,double yy,double zz)
+    Vec(double xx,double yy,double zz)
     {
         x=xx;
         y=yy;
@@ -80,6 +89,13 @@ struct vector
 struct matrix
 {
     double arr[4][4];
+};
+
+struct Triangle
+{
+    point points[3];
+    int color[3];
+
 };
 
 void printPoint(struct point p)
@@ -126,9 +142,9 @@ void printPointMatirx(struct point_matrix m)
 
 }
 
-void printVector( struct vector v)
+void printVec( struct Vec v)
 {
-    cout<<"Vector"<<endl;
+    cout<<"Vec"<<endl;
     cout<<v.x<<" ";
     cout<<v.y<<" ";
     cout<<v.z<<" ";
@@ -152,14 +168,16 @@ struct point pointFromPointMatrix(struct point_matrix p)
 stack<matrix> matrixStack;
 stack<int> stackSizeStoreStack;
 
+ vector<Triangle> Triangles;
 
-struct vector normalizeVector(struct vector v)
+
+struct Vec normalizeVec(struct Vec v)
 {
-    vector returnVec;
-    double vectorValue=sqrt(pow(v.x,2)+pow(v.y,2)+pow(v.z,2));
-    returnVec.x=v.x/vectorValue;
-    returnVec.y=v.y/vectorValue;
-    returnVec.z=v.z/vectorValue;
+    Vec returnVec;
+    double VecValue=sqrt(pow(v.x,2)+pow(v.y,2)+pow(v.z,2));
+    returnVec.x=v.x/VecValue;
+    returnVec.y=v.y/VecValue;
+    returnVec.z=v.z/VecValue;
     return returnVec;
 
 
@@ -169,21 +187,21 @@ struct vector normalizeVector(struct vector v)
 
 
 
-struct vector crossMultiply(struct vector v1,struct vector v2)
+struct Vec crossMultiply(struct Vec v1,struct Vec v2)
 {
-    struct vector crossProductVector;
+    struct Vec crossProductVec;
 
-    crossProductVector.x = v1.y * v2.z - v1.z * v2.y;
-    crossProductVector.y = v1.z * v2.x - v1.x * v2.z;
-    crossProductVector.z = v1.x * v2.y - v1.y * v2.x;
+    crossProductVec.x = v1.y * v2.z - v1.z * v2.y;
+    crossProductVec.y = v1.z * v2.x - v1.x * v2.z;
+    crossProductVec.z = v1.x * v2.y - v1.y * v2.x;
 
-    return crossProductVector; 
+    return crossProductVec; 
 
 
 }
 
 
-double dotMultiply(struct vector v1, struct vector v2)
+double dotMultiply(struct Vec v1, struct Vec v2)
 {
 
     double product = 0;
@@ -192,20 +210,20 @@ double dotMultiply(struct vector v1, struct vector v2)
 }
 
 
-struct vector rotateVector(struct vector  axis,struct vector v,double rotation_angle)
+struct Vec rotateVec(struct Vec  axis,struct Vec v,double rotation_angle)
 {
-    vector returnVec;
+    Vec returnVec;
     double dotProduct=dotMultiply(axis,v);
    // cout<<"dot "<<dotProduct<<endl;
-    vector crossProduct=crossMultiply(v,axis);
+    Vec crossProduct=crossMultiply(v,axis);
  //   cout<<"cross P"<<endl;
-   // printVector(crossProduct);
+   // printVec(crossProduct);
 
-  //  cout<<"sxis vector"<<endl;
-  //  printVector(axis);
+  //  cout<<"sxis Vec"<<endl;
+  //  printVec(axis);
 
-   // cout<<"a vector normalized"<<endl;
-  //  printVector(v);
+   // cout<<"a Vec normalized"<<endl;
+  //  printVec(v);
 
 
 
@@ -219,7 +237,7 @@ struct vector rotateVector(struct vector  axis,struct vector v,double rotation_a
     returnVec.y=axis.y*c_theta+crossProduct.y*s_theta+(dotProduct)*v.y*one_minus_c_theta;
     returnVec.z=axis.z*c_theta+crossProduct.z*s_theta+(dotProduct)*v.z*one_minus_c_theta;
    // cout<<"returnVec Inside RotateVec"<<endl;
-  //  printVector(returnVec);
+  //  printVec(returnVec);
     return returnVec; 
 
 }
@@ -277,19 +295,19 @@ matrix generateScalingMatrix(double sx,double sy,double sz)
 matrix generateRotationMatrix(double rotation_angle,double ax,double ay,double az)
 {
     rotation_angle = rotation_angle * (pi/180);
-    vector a(ax,ay,az);
-    vector normlized_a=normalizeVector(a);
+    Vec a(ax,ay,az);
+    Vec normlized_a=normalizeVec(a);
     matrix R=generateIdentityMatrix();
-    vector i_vector(1,0,0),j_vector(0,1,0),k_vector(0,0,1);
-    vector c1=rotateVector(i_vector,normlized_a,rotation_angle);
+    Vec i_Vec(1,0,0),j_Vec(0,1,0),k_Vec(0,0,1);
+    Vec c1=rotateVec(i_Vec,normlized_a,rotation_angle);
    // cout<<"C1"<<endl;
-    //printVector(c1);
-    vector c2=rotateVector(j_vector,normlized_a,rotation_angle);
+    //printVec(c1);
+    Vec c2=rotateVec(j_Vec,normlized_a,rotation_angle);
    // cout<<"C2"<<endl;
-    //printVector(c2);
-    vector c3=rotateVector(k_vector,normlized_a,rotation_angle);
+    //printVec(c2);
+    Vec c3=rotateVec(k_Vec,normlized_a,rotation_angle);
   //  cout<<"C3"<<endl;
-    //printVector(c3);
+    //printVec(c3);
     R.arr[0][0]=c1.x;
     R.arr[0][1]=c2.x;
     R.arr[0][2]=c3.x;
@@ -365,18 +383,29 @@ struct point transformPoint(struct point p,struct matrix m)
 
 }
 
-struct vector vectorAddition(struct vector v1,struct vector v2,int addOrSubtract)
+struct Vec VecAddition(struct Vec v1,struct Vec v2,int addOrSubtract)
 {
-    struct vector returnVector;
-    returnVector.x=v1.x+(addOrSubtract)*v2.x;
-    returnVector.y=v1.y+(addOrSubtract)*v2.y;
-    returnVector.z=v1.z+(addOrSubtract)*v2.z;
-    return returnVector;
+    struct Vec returnVec;
+    returnVec.x=v1.x+(addOrSubtract)*v2.x;
+    returnVec.y=v1.y+(addOrSubtract)*v2.y;
+    returnVec.z=v1.z+(addOrSubtract)*v2.z;
+    return returnVec;
 
 
 }
 
-
+void printTriangle(Triangle T)
+{
+    for(int i=0;i<3;i++)
+    {
+        cout<<T.points[i].x<<" "<<T.points[i].y<<" "<<T.points[i].z<<endl;
+    }
+    for(int i=0;i<3;i++)
+    {
+        cout<<T.color[i]<<" ";
+    }
+    cout<<endl;
+}
 
 
 
@@ -404,7 +433,7 @@ int main()
     pos = fileLine.find(" ");
     double eyez = stod(fileLine.substr(0,pos));
 
-    vector eyeVector(eyex,eyey,eyez);
+    Vec eyeVec(eyex,eyey,eyez);
 
     getline(in,fileLine);
     pos = fileLine.find(" ");
@@ -418,7 +447,7 @@ int main()
     pos = fileLine.find(" ");
     double lookz = stod(fileLine.substr(0,pos));
 
-    vector lookVector(lookx,looky,lookz);
+    Vec lookVec(lookx,looky,lookz);
 
 
     getline(in,fileLine);
@@ -433,18 +462,18 @@ int main()
     pos = fileLine.find(" ");
     double upz = stod(fileLine.substr(0,pos));
 
-    vector upVector(upx,upy,upz);   
+    Vec upVec(upx,upy,upz);   
 
 
-    // printVector(eyeVector);
-    // printVector(lookVector);
-    // printVector(upVector); 
+    // printVec(eyeVec);
+    // printVec(lookVec);
+    // printVec(upVec); 
     
-    vector l=vectorAddition(lookVector,eyeVector,-1);
-    l=normalizeVector(l);
-    vector r=crossMultiply(l,upVector);
-    r=normalizeVector(r);
-    vector u=crossMultiply(r,l);
+    Vec l=VecAddition(lookVec,eyeVec,-1);
+    l=normalizeVec(l);
+    Vec r=crossMultiply(l,upVec);
+    r=normalizeVec(r);
+    Vec u=crossMultiply(r,l);
 
     struct matrix T=generateIdentityMatrix();
     T.arr[0][3]=-eyex;
@@ -520,6 +549,7 @@ int main()
 
     while (true)
    {
+        
         getline(in,command);
         if(command=="triangle")
         {
@@ -584,11 +614,14 @@ int main()
             }
             stage2Output<<endl;  
 
+          //  point points[3];
+            struct Triangle T;
+
             for(int i=0;i<3;i++)
             {
                /// struct matrix m=matrixStack.top();
               // printMatirx(P);
-
+        
                 cout<<"stage 2 point\n";
                 printPoint(stage2TransformedTrianglePoints[i]);
           
@@ -598,9 +631,13 @@ int main()
                 stage3Output<<stage3TransformedTrianglePoints[i].z<<" ";
                 stage3Output<<endl;
               
-                 
+                point p(stage3TransformedTrianglePoints[i].x,stage3TransformedTrianglePoints[i].y,stage3TransformedTrianglePoints[i].z);
+                T.points[i]=p;
+                T.color[i]=(rand()*i)%255;
+
 
             }
+            Triangles.push_back(T);
             stage3Output<<endl;         
 
 
@@ -721,12 +758,55 @@ int main()
         {
             break;
         }
-
-
-
    }
 
+//read screen width and height
+getline(config,fileLine);
+pos = 0;
+pos = fileLine.find(" ");
+screen_width = stod(fileLine.substr(0,pos));
+fileLine.erase(0, pos + 1); 
+pos = fileLine.find(" ");
+screen_height = stod(fileLine.substr(0,pos));
 
-    return 0;
+//read left and right limit of X
+getline(config,fileLine);
+pos = 0;
+pos = fileLine.find(" ");
+left_limit_of_X = stod(fileLine.substr(0,pos));
+right_limit_of_X=-left_limit_of_X;
+
+
+//read bottom and top limit of y
+getline(config,fileLine);
+pos = 0;
+pos = fileLine.find(" ");
+bottom_limit_of_Y = stod(fileLine.substr(0,pos));
+top_limit_of_Y=-bottom_limit_of_Y;
+
+//front and rear limits of Z
+
+getline(config,fileLine);
+pos = 0;
+pos = fileLine.find(" ");
+front_limit_of_Z = stod(fileLine.substr(0,pos));
+fileLine.erase(0, pos + 1); 
+pos = fileLine.find(" ");
+rear_limit_of_Z = stod(fileLine.substr(0,pos));
+
+// cout<<screen_height<<" "<<screen_height<<endl;
+// cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
+// cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
+// cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
+
+cout<<"Trinagles begin here\n";
+
+for(auto i = begin(Triangles); i  != end(Triangles); i++){
+        printTriangle(*i);
+    }
+
+
+return 0;
+
 }
 

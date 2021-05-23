@@ -4,6 +4,9 @@
         "iosfwd": "cpp",
         "string": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "vector": "cpp",
+        "xlocale": "cpp",
+        "xmemory0": "cpp"
     }
 }
