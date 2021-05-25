@@ -20,6 +20,12 @@ ofstream stage3Output("stage3.txt");
 double screen_width,screen_height;
 double left_limit_of_X,right_limit_of_X,bottom_limit_of_Y,top_limit_of_Y;
 double front_limit_of_Z,rear_limit_of_Z;
+double dx,dy,top_y,left_x;
+double Top_Y,Left_X;
+double zMax;
+double** zbuffer;
+
+
 
 
 
@@ -407,6 +413,53 @@ void printTriangle(Triangle T)
     cout<<endl;
 }
 
+void readConfig()
+{
+    string fileLine;
+
+    getline(config,fileLine);
+    size_t pos = 0;
+    pos = fileLine.find(" ");
+    bottom_limit_of_Y = stod(fileLine.substr(0,pos));
+    top_limit_of_Y=-bottom_limit_of_Y;
+
+//front and rear limits of Z
+
+    getline(config,fileLine);
+    pos = 0;
+    pos = fileLine.find(" ");
+    front_limit_of_Z = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+    pos = fileLine.find(" ");
+    rear_limit_of_Z = stod(fileLine.substr(0,pos));
+
+    dx = (right_limit_of_X - left_limit_of_X) / screen_width;
+    dy = (top_limit_of_Y - bottom_limit_of_Y) /screen_height;
+    Top_Y = top_limit_of_Y - (dy/2);
+    Left_X = left_limit_of_X + (dx/2);
+    zMax=rear_limit_of_Z-front_limit_of_Z;
+
+}
+
+void buffer_init()
+{
+    zbuffer = new double*[(int)screen_width];
+
+    for(int i=0;i<screen_height;i++)
+    {
+        zbuffer[i] = new double[(int)screen_width];
+    }
+
+    for(int i=0;i<screen_height;i++)
+    {
+        for(int j=0;j<screen_width;j++)
+        {
+            zbuffer[i][j] = zMax;
+
+        }
+    }
+}
+
 
 
 
@@ -542,7 +595,9 @@ int main()
     P.arr[3][2]=-1;
     P.arr[3][3]=0;
 
-    printMatirx(P);
+    //printMatirx(P);
+
+    
 
     
 
@@ -623,7 +678,7 @@ int main()
               // printMatirx(P);
         
                 cout<<"stage 2 point\n";
-                printPoint(stage2TransformedTrianglePoints[i]);
+                //printPoint(stage2TransformedTrianglePoints[i]);
           
                 stage3TransformedTrianglePoints[i]=transformPoint(stage2TransformedTrianglePoints[i],P);
                 stage3Output<<stage3TransformedTrianglePoints[i].x<<" ";
@@ -778,26 +833,35 @@ right_limit_of_X=-left_limit_of_X;
 
 
 //read bottom and top limit of y
-getline(config,fileLine);
-pos = 0;
-pos = fileLine.find(" ");
-bottom_limit_of_Y = stod(fileLine.substr(0,pos));
-top_limit_of_Y=-bottom_limit_of_Y;
+// getline(config,fileLine);
+// pos = 0;
+// pos = fileLine.find(" ");
+// bottom_limit_of_Y = stod(fileLine.substr(0,pos));
+// top_limit_of_Y=-bottom_limit_of_Y;
 
-//front and rear limits of Z
+// //front and rear limits of Z
 
-getline(config,fileLine);
-pos = 0;
-pos = fileLine.find(" ");
-front_limit_of_Z = stod(fileLine.substr(0,pos));
-fileLine.erase(0, pos + 1); 
-pos = fileLine.find(" ");
-rear_limit_of_Z = stod(fileLine.substr(0,pos));
+// getline(config,fileLine);
+// pos = 0;
+// pos = fileLine.find(" ");
+// front_limit_of_Z = stod(fileLine.substr(0,pos));
+// fileLine.erase(0, pos + 1); 
+// pos = fileLine.find(" ");
+// rear_limit_of_Z = stod(fileLine.substr(0,pos));
 
-// cout<<screen_height<<" "<<screen_height<<endl;
-// cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
-// cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
-// cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
+// dx = (right_limit_of_X - left_limit_of_X) / screen_width;
+// dy = (top_limit_of_Y - bottom_limit_of_Y) /screen_height;
+// Top_Y = top_limit_of_Y - (dy/2);
+// Left_X = left_limit_of_X + (dx/2);
+// zMax=rear_limit_of_Z-front_limit_of_Z;
+
+
+readConfig();
+buffer_init();
+cout<<screen_height<<" "<<screen_height<<endl;
+cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
+cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
+cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
 
 cout<<"Trinagles begin here\n";
 
