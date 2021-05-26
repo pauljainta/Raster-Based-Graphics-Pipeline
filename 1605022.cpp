@@ -159,6 +159,19 @@ void printVec( struct Vec v)
 
 }
 
+void printBuffer()
+{
+    cout<<"zbuffer"<<endl;
+    for(int i=0;i<screen_height;i++)
+    {
+        for(int j=0;j<screen_width;j++)
+        {
+            if(zbuffer[i][j]<rear_limit_of_Z) cout<<zbuffer[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+
 struct point pointFromPointMatrix(struct point_matrix p)
 {
     struct point returnPoint;
@@ -458,6 +471,86 @@ void buffer_init()
 
         }
     }
+   
+}
+double getTriangleMax_XCoordinate(struct Triangle triangle)
+{
+    double a =triangle.points[0].x;
+    double b=triangle.points[1].x;
+    double c=triangle.points[2].x;
+    if(a>=b && a>=c)
+    {
+        return a;
+    }
+    else if (b>=a && b>=c)
+    {
+        return b;
+    }
+    else return c;
+    
+}
+
+double getTriangleMax_YCoordinate(struct Triangle triangle)
+{
+    double a =triangle.points[0].y;
+    double b=triangle.points[1].y;
+    double c=triangle.points[2].y;
+    if(a>=b && a>=c)
+    {
+        return a;
+    }
+    else if (b>=a && b>=c)
+    {
+        return b;
+    }
+    else return c;
+    
+}
+
+double getTriangleMin_XCoordinate(struct Triangle triangle)
+{
+    double a =triangle.points[0].x;
+    double b=triangle.points[1].x;
+    double c=triangle.points[2].x;
+    if(a<=b && a<=c)
+    {
+        return a;
+    }
+    else if (b<=a && b<=c)
+    {
+        return b;
+    }
+    else return c;
+    
+}
+
+double getTriangleMin_YCoordinate(struct Triangle triangle)
+{
+    double a =triangle.points[0].y;
+    double b=triangle.points[1].y;
+    double c=triangle.points[2].y;
+    if(a<=b && a<=c)
+    {
+        return a;
+    }
+    else if (b<=a && b<=c)
+    {
+        return b;
+    }
+    else return c;
+    
+}
+
+void processTriangle()
+{
+     for(auto i = begin(Triangles); i  != end(Triangles); i++){
+        
+        Triangle t=*i;
+        cout<<"max_x "<<getTriangleMax_XCoordinate(t)<<" min_x "<<getTriangleMin_XCoordinate(t)<<" max_y "<<getTriangleMax_YCoordinate(t)<<"min_y "<<getTriangleMin_YCoordinate(t)<<endl;
+
+     }
+
+
 }
 
 
@@ -831,43 +924,19 @@ pos = fileLine.find(" ");
 left_limit_of_X = stod(fileLine.substr(0,pos));
 right_limit_of_X=-left_limit_of_X;
 
-
-//read bottom and top limit of y
-// getline(config,fileLine);
-// pos = 0;
-// pos = fileLine.find(" ");
-// bottom_limit_of_Y = stod(fileLine.substr(0,pos));
-// top_limit_of_Y=-bottom_limit_of_Y;
-
-// //front and rear limits of Z
-
-// getline(config,fileLine);
-// pos = 0;
-// pos = fileLine.find(" ");
-// front_limit_of_Z = stod(fileLine.substr(0,pos));
-// fileLine.erase(0, pos + 1); 
-// pos = fileLine.find(" ");
-// rear_limit_of_Z = stod(fileLine.substr(0,pos));
-
-// dx = (right_limit_of_X - left_limit_of_X) / screen_width;
-// dy = (top_limit_of_Y - bottom_limit_of_Y) /screen_height;
-// Top_Y = top_limit_of_Y - (dy/2);
-// Left_X = left_limit_of_X + (dx/2);
-// zMax=rear_limit_of_Z-front_limit_of_Z;
-
-
 readConfig();
 buffer_init();
-cout<<screen_height<<" "<<screen_height<<endl;
-cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
-cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
-cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
+processTriangle();
+// cout<<screen_height<<" "<<screen_height<<endl;
+// cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
+// cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
+// cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
 
-cout<<"Trinagles begin here\n";
+// cout<<"Trinagles begin here\n";
 
-for(auto i = begin(Triangles); i  != end(Triangles); i++){
-        printTriangle(*i);
-    }
+// for(auto i = begin(Triangles); i  != end(Triangles); i++){
+//         printTriangle(*i);
+//     }
 
 
 return 0;
