@@ -21,9 +21,11 @@ double screen_width,screen_height;
 double left_limit_of_X,right_limit_of_X,bottom_limit_of_Y,top_limit_of_Y;
 double front_limit_of_Z,rear_limit_of_Z;
 double dx,dy,top_y,left_x;
-double Top_Y,Left_X;
+double Top_Y,Bottom_Y,Left_X,Right_X;
+
 double zMax;
 double** zbuffer;
+double s_line;
 
 
 
@@ -430,8 +432,25 @@ void readConfig()
 {
     string fileLine;
 
+//read screen width and height
     getline(config,fileLine);
     size_t pos = 0;
+    pos = fileLine.find(" ");
+    screen_width = stod(fileLine.substr(0,pos));
+    fileLine.erase(0, pos + 1); 
+    pos = fileLine.find(" ");
+    screen_height = stod(fileLine.substr(0,pos));
+
+//read left and right limit of X
+    getline(config,fileLine);
+    pos = 0;
+    pos = fileLine.find(" ");
+    left_limit_of_X = stod(fileLine.substr(0,pos));
+    right_limit_of_X=-left_limit_of_X;
+
+
+    getline(config,fileLine);
+    pos = 0;
     pos = fileLine.find(" ");
     bottom_limit_of_Y = stod(fileLine.substr(0,pos));
     top_limit_of_Y=-bottom_limit_of_Y;
@@ -448,15 +467,17 @@ void readConfig()
 
     dx = (right_limit_of_X - left_limit_of_X) / screen_width;
     dy = (top_limit_of_Y - bottom_limit_of_Y) /screen_height;
-    Top_Y = top_limit_of_Y - (dy/2);
-    Left_X = left_limit_of_X + (dx/2);
+    Top_Y = top_limit_of_Y - dy/2;
+    Bottom_Y = bottom_limit_of_Y + dy/2;
+    Left_X = left_limit_of_X + dx/2;
+    Right_X = right_limit_of_X - dx/2;
     zMax=rear_limit_of_Z-front_limit_of_Z;
 
 }
 
 void buffer_init()
 {
-    zbuffer = new double*[(int)screen_width];
+    zbuffer = new double*[(int)screen_height];
 
     for(int i=0;i<screen_height;i++)
     {
@@ -541,12 +562,84 @@ double getTriangleMin_YCoordinate(struct Triangle triangle)
     
 }
 
+double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
+{
+        double x1 = T.points[point1].x;
+        double y1 = T.points[point1].y;
+
+        double x2 = T.points[point2].x;
+        double y2 = T.points[point2].y;
+
+        if(y1 == y2) return getTriangleMax_XCoordinate(T)+50;
+
+        double ans = x1 + ((s_line-y1) / (y1-y2)) * (x1-x2);
+
+        return ans;
+}
+
+
+    double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
+    {
+        double z1 = T.points[point1].z;
+        double y1 = T.points[point2].y;
+
+        double z2 = T.points[point2].z;
+        double y2 = T.points[point2].y;
+
+        if(y1 == y2)  return 0;
+
+
+        return  z1 + ((s_line-y1) / (y1-y2)) * (z1-z2);
+    }
+
+
 void processTriangle()
 {
      for(auto i = begin(Triangles); i  != end(Triangles); i++){
         
         Triangle t=*i;
-        cout<<"max_x "<<getTriangleMax_XCoordinate(t)<<" min_x "<<getTriangleMin_XCoordinate(t)<<" max_y "<<getTriangleMax_YCoordinate(t)<<"min_y "<<getTriangleMin_YCoordinate(t)<<endl;
+       // cout<<"max_x "<<getTriangleMax_XCoordinate(t)<<" min_x "<<getTriangleMin_XCoordinate(t)<<" max_y "<<getTriangleMax_YCoordinate(t)<<" min_y "<<getTriangleMin_YCoordinate(t)<<endl;
+
+        double max_x_boundary=getTriangleMax_XCoordinate(t);
+        double max_y_boundary=getTriangleMax_YCoordinate(t);
+        double min_x_boundary=getTriangleMin_XCoordinate(t);
+        double min_y_boundary=getTriangleMin_YCoordinate(t);
+
+        int triangle_start_row,triangle_end_row,triangle_start_column,triangle_end_column;
+        double triangle_top_scaline,triangle_bottom_scaline;
+        if(max_x_boundary < Top_Y)
+        {
+            triangle_start_row = ceil((Top_Y - max_y_boundary)/dy);
+
+            triangle_top_scaline = Top_Y - (triangle_start_row * dy);
+
+        }
+        else
+        {
+            triangle_start_row=0;
+            triangle_top_scaline=Top_Y;
+        }
+
+        if(min_y_boundary >Bottom_Y )
+        {
+            
+            triangle_end_row= floor((Top_Y - min_y_boundary)/dy);
+
+            triangle_bottom_scaline = Top_Y -(triangle_end_row * dy);
+        }
+        else
+        {
+            triangle_end_row=screen_height-1;
+            triangle_bottom_scaline=Bottom_Y;
+        }
+
+        for(int row=triangle_start_row;row<=triangle_end_row;row++)
+        {
+            s_line=Top_Y - (row * dy);
+
+        }
+
+
 
      }
 
@@ -908,21 +1001,7 @@ int main()
         }
    }
 
-//read screen width and height
-getline(config,fileLine);
-pos = 0;
-pos = fileLine.find(" ");
-screen_width = stod(fileLine.substr(0,pos));
-fileLine.erase(0, pos + 1); 
-pos = fileLine.find(" ");
-screen_height = stod(fileLine.substr(0,pos));
 
-//read left and right limit of X
-getline(config,fileLine);
-pos = 0;
-pos = fileLine.find(" ");
-left_limit_of_X = stod(fileLine.substr(0,pos));
-right_limit_of_X=-left_limit_of_X;
 
 readConfig();
 buffer_init();
