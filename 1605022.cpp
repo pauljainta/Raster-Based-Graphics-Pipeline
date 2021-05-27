@@ -8,6 +8,7 @@
 #include<vector>
 #include<time.h>
 #include<algorithm>
+#include "bitmap_image.hpp"
 using namespace std;
 
 #define pi (2*acos(0.0))
@@ -59,6 +60,15 @@ void skipNFileLines(int N)
    
 
 }
+
+class Color
+{
+    public:
+    double R,G,B;
+
+};
+
+Color** frame_buffer;
 
 
 struct point
@@ -504,7 +514,7 @@ void readConfig()
 
 }
 
-void buffer_init()
+void Zbuffer_init()
 {
     zbuffer = new double*[(int)screen_height];
 
@@ -517,12 +527,46 @@ void buffer_init()
     {
         for(int j=0;j<screen_width;j++)
         {
-            zbuffer[i][j] = zMax;
-
+            zbuffer[i][j] = rear_limit_of_Z;
         }
     }
    
 }
+
+
+void frame_buffer_init()
+{
+
+    cout<<"bal2"<<endl;
+    frame_buffer=new Color*[(int)screen_height];
+
+    cout<<"bal3"<<endl;
+
+    for(int i=0;i<(int)screen_height;i++)
+    {
+        frame_buffer[i] = new Color[(int)screen_width];
+    }
+
+    cout<<screen_height<<screen_width<<endl;
+
+    for(int i=0;i<(int)screen_height;i++)
+    {
+        for(int j=0;j<(int)screen_width;j++)
+        {
+           frame_buffer[i][j].R=0;
+           frame_buffer[i][j].G=0;
+           frame_buffer[i][j].B=0;
+         //  cout<<i<<endl;
+
+        }
+    }
+
+    cout<<"bal6"<<endl;
+
+}
+
+
+
 double getTriangleMax_XCoordinate(struct Triangle triangle)
 {
     double a =triangle.points[0].x;
@@ -814,6 +858,9 @@ void processTriangle()
                 {
                     //cout<<"jeta bosabo "<<current_pixel_z<<endl; 
                     zbuffer[row][column] = current_pixel_z;
+                    frame_buffer[row][column].R=t.color[0];
+                    frame_buffer[row][column].G=t.color[1];
+                    frame_buffer[row][column].B=t.color[2];
 
                 }
 
@@ -823,12 +870,25 @@ void processTriangle()
 
         }
 
-
-
      }
 
     
 
+
+}
+
+void generateImage()
+{
+    bitmap_image image(screen_width,screen_height);
+    for(int i=0;i<screen_height;i++)
+    {
+        for(int j=0;j<screen_width;j++)
+        {
+            image.set_pixel(j, i, frame_buffer[i][j].R, frame_buffer[i][j].G, frame_buffer[i][j].B);
+        }
+    }
+
+    image.save_image("output.bmp");
 
 }
 
@@ -1190,9 +1250,11 @@ int main()
 
 
 readConfig();
-buffer_init();
+Zbuffer_init();
+frame_buffer_init();
 processTriangle();
 printBuffer();
+generateImage();
 
 
 
