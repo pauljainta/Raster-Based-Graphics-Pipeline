@@ -7,6 +7,7 @@
 #include<cstdlib>
 #include<vector>
 #include<time.h>
+#include<algorithm>
 using namespace std;
 
 #define pi (2*acos(0.0))
@@ -16,16 +17,30 @@ ifstream config("config.txt");
 ofstream stage1Output("stage1.txt");
 ofstream stage2Output("stage2.txt");
 ofstream stage3Output("stage3.txt");
+ofstream z_bufferfile("z_buffer.txt");
 
 double screen_width,screen_height;
 double left_limit_of_X,right_limit_of_X,bottom_limit_of_Y,top_limit_of_Y;
 double front_limit_of_Z,rear_limit_of_Z;
-double dx,dy,top_y,left_x;
+double dx,dy;
 double Top_Y,Bottom_Y,Left_X,Right_X;
 
 double zMax;
 double** zbuffer;
 double s_line;
+
+double max_x_boundary,max_y_boundary,min_x_boundary,min_y_boundary;
+
+int triangle_start_row,triangle_end_row,triangle_start_column,triangle_end_column;
+double triangle_top_scaline,triangle_bottom_scaline;
+
+double left_column,right_column,left_column_z,right_column_z;
+
+double current_column;
+
+
+
+
 
 
 
@@ -168,8 +183,13 @@ void printBuffer()
     {
         for(int j=0;j<screen_width;j++)
         {
-            if(zbuffer[i][j]<rear_limit_of_Z) cout<<zbuffer[i][j]<<" ";
+            if(zbuffer[i][j]<rear_limit_of_Z)
+            {
+                cout<<zbuffer[i][j]<<" ";
+                z_bufferfile<<zbuffer[i][j]<<" ";
+            }
         }
+        z_bufferfile<<endl;
         cout<<endl;
     }
 }
@@ -467,11 +487,20 @@ void readConfig()
 
     dx = (right_limit_of_X - left_limit_of_X) / screen_width;
     dy = (top_limit_of_Y - bottom_limit_of_Y) /screen_height;
+   // cout<<"dx "<<dx<<endl;
+   // cout<<"dy "<<dy<<endl;
+    
     Top_Y = top_limit_of_Y - dy/2;
     Bottom_Y = bottom_limit_of_Y + dy/2;
     Left_X = left_limit_of_X + dx/2;
     Right_X = right_limit_of_X - dx/2;
     zMax=rear_limit_of_Z-front_limit_of_Z;
+
+    // cout<<"Top Y"<<Top_Y<<endl;
+    //  cout<<"Bottom Y"<<Bottom_Y<<endl;
+    //  cout<<"left x"<<Left_X<<endl;
+    //  cout<<"right x"<<Right_X<<endl;
+
 
 }
 
@@ -570,7 +599,7 @@ double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
         double x2 = T.points[point2].x;
         double y2 = T.points[point2].y;
 
-        if(y1 == y2) return getTriangleMax_XCoordinate(T)+50;
+        if(y1 == y2) return getTriangleMax_XCoordinate(T)+10;
 
         double ans = x1 + ((s_line-y1) / (y1-y2)) * (x1-x2);
 
@@ -578,10 +607,10 @@ double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
 }
 
 
-    double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
+    double ScanLineTriangleSideIntersect_Z(struct Triangle T,int point1,int point2)
     {
         double z1 = T.points[point1].z;
-        double y1 = T.points[point2].y;
+        double y1 = T.points[point1].y;
 
         double z2 = T.points[point2].z;
         double y2 = T.points[point2].y;
@@ -593,6 +622,76 @@ double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
     }
 
 
+void setColumnBoundaries(double xa,double xb,double xc,double za,double zb,double zc)
+{
+     if( xa>max_x_boundary || xa<min_x_boundary)
+     {
+         if(xc < xb)
+        {
+            left_column = xc;
+            right_column = xb;
+
+            left_column_z = zc;
+            right_column_z = zb;
+        }
+        else
+        {
+            left_column = xb;
+            right_column = xc;
+
+            left_column_z = zb;
+            right_column_z = zc;
+        }
+
+     }
+
+     else if( xb>max_x_boundary || xb<min_x_boundary)
+     {
+         if(xa < xc)
+        {
+            left_column = xa;
+            right_column = xc;
+
+            left_column_z = za;
+            right_column_z = zc;
+        }
+        else
+        {
+            left_column = xc;
+            right_column = xa;
+
+            left_column_z = zc;
+            right_column_z = za;
+        }
+
+     }
+
+     else 
+     {
+         if(xa < xb)
+        {
+            left_column = xa;
+            right_column = xb;
+
+            left_column_z = za;
+            right_column_z = zb;
+        }
+        else
+        {
+            left_column = xb;
+            right_column = xa;
+
+            left_column_z = zb;
+            right_column_z = za;
+        }
+
+     }
+
+
+}
+
+
+
 void processTriangle()
 {
      for(auto i = begin(Triangles); i  != end(Triangles); i++){
@@ -600,16 +699,19 @@ void processTriangle()
         Triangle t=*i;
        // cout<<"max_x "<<getTriangleMax_XCoordinate(t)<<" min_x "<<getTriangleMin_XCoordinate(t)<<" max_y "<<getTriangleMax_YCoordinate(t)<<" min_y "<<getTriangleMin_YCoordinate(t)<<endl;
 
-        double max_x_boundary=getTriangleMax_XCoordinate(t);
-        double max_y_boundary=getTriangleMax_YCoordinate(t);
-        double min_x_boundary=getTriangleMin_XCoordinate(t);
-        double min_y_boundary=getTriangleMin_YCoordinate(t);
+         max_x_boundary=getTriangleMax_XCoordinate(t);
+         max_y_boundary=getTriangleMax_YCoordinate(t);
+         min_x_boundary=getTriangleMin_XCoordinate(t);
+         min_y_boundary=getTriangleMin_YCoordinate(t);
 
-        int triangle_start_row,triangle_end_row,triangle_start_column,triangle_end_column;
-        double triangle_top_scaline,triangle_bottom_scaline;
+       // cout<<"max_x "<<max_x_boundary<<" min_x "<<min_x_boundary<<" max_y "<<max_y_boundary<<" min_y "<<min_y_boundary<<endl;
+
+
+       
         if(max_x_boundary < Top_Y)
         {
             triangle_start_row = ceil((Top_Y - max_y_boundary)/dy);
+            
 
             triangle_top_scaline = Top_Y - (triangle_start_row * dy);
 
@@ -619,6 +721,8 @@ void processTriangle()
             triangle_start_row=0;
             triangle_top_scaline=Top_Y;
         }
+
+     
 
         if(min_y_boundary >Bottom_Y )
         {
@@ -633,15 +737,97 @@ void processTriangle()
             triangle_bottom_scaline=Bottom_Y;
         }
 
+        // cout<<"Triangle start row "<<triangle_start_row<<endl;
+        // cout<<"Triangle end row "<<triangle_end_row<<endl;
+        // cout<<"Triangle top_scaline "<<triangle_top_scaline<<endl;
+        // cout<<"Triangle bottom_scaline "<<triangle_bottom_scaline<<endl;
+
         for(int row=triangle_start_row;row<=triangle_end_row;row++)
         {
             s_line=Top_Y - (row * dy);
+           // cout<<"scan line "<<s_line<<endl;
+
+            double xa = ScanLineTriangleSideIntersect_X(t, 0,1);
+            double xb = ScanLineTriangleSideIntersect_X(t, 0,2);
+            double xc = ScanLineTriangleSideIntersect_X(t, 1,2);
+
+            double za =ScanLineTriangleSideIntersect_Z(t,0,1);
+            double zb = ScanLineTriangleSideIntersect_Z(t,0,2);
+            double zc = ScanLineTriangleSideIntersect_Z(t,1,2);
+
+           // cout<<"xa "<<xa<<" xb "<<xb<<" xc "<<xc<<endl;
+           // cout<<"za "<<za<<" zb "<<zb<<" zc "<<zc<<endl;
+
+            setColumnBoundaries(xa,xb,xc,za,zb,zc);
+
+            
+
+           
+
+        //   cout<<"left column "<<left_column<<" right column "<<right_column<<endl;
+        //   cout<<"left column Z "<<left_column_z<<" right column Z "<<right_column_z<<endl;
+
+    
+
+          //  cout<<"left column "<<left_column<<endl;
+          //  cout<<"left X "<<Left_X<<endl;
+
+            // cout<<"right column "<<right_column<<endl;
+         //   cout<<"right X "<<Right_X<<endl;
+
+            if(left_column > Left_X)
+            {
+                triangle_start_column = round((left_column - Left_X)/dx);
+            }
+            else
+            {
+                triangle_start_column=0;
+            }
+
+            if(right_column < Right_X)
+            {
+                triangle_end_column = round((right_column - Left_X)/dx);
+            }
+            else
+            {
+                triangle_end_column=screen_width - 1;
+            }
+
+        //    cout<<"Triangle start column "<<triangle_start_column<<endl;
+        //    cout<<"Triangle end column "<<triangle_end_column<<endl;
+
+            for(int column=triangle_start_column;column<=triangle_end_column;column++)
+            {
+                //je column e  asi ekhn setar x coordinate calcul;ation er jnne
+                current_column = Left_X + (column * dx);
+               // cout<<" current column "<<current_column<<endl;
+
+              // cout<<"r c z "<<right_column_z<<" l c z "<<left_column_z<<endl;
+             //  cout<<"r c "<<right_column<<" l c  "<<left_column<<endl;
+             //  cout<<"current col "<<current_column<<endl;
+                double current_pixel_z = right_column_z -
+                           ((right_column_z - left_column_z) / (right_column - left_column)) * (right_column - current_column);
+
+               // cout<<"current pixel z "<<current_pixel_z<<endl;
+
+                if(current_pixel_z >= front_limit_of_Z && current_pixel_z < zbuffer[row][column])
+                {
+                    //cout<<"jeta bosabo "<<current_pixel_z<<endl; 
+                    zbuffer[row][column] = current_pixel_z;
+
+                }
+
+                
+           }
+      
 
         }
 
 
 
      }
+
+    
 
 
 }
@@ -863,7 +1049,7 @@ int main()
                /// struct matrix m=matrixStack.top();
               // printMatirx(P);
         
-                cout<<"stage 2 point\n";
+               // cout<<"stage 2 point\n";
                 //printPoint(stage2TransformedTrianglePoints[i]);
           
                 stage3TransformedTrianglePoints[i]=transformPoint(stage2TransformedTrianglePoints[i],P);
@@ -1006,16 +1192,8 @@ int main()
 readConfig();
 buffer_init();
 processTriangle();
-// cout<<screen_height<<" "<<screen_height<<endl;
-// cout<<left_limit_of_X<<" "<<right_limit_of_X<<endl;
-// cout<<bottom_limit_of_Y<<" "<<top_limit_of_Y<<endl;
-// cout<<front_limit_of_Z<<" "<<rear_limit_of_Z<<endl;
+printBuffer();
 
-// cout<<"Trinagles begin here\n";
-
-// for(auto i = begin(Triangles); i  != end(Triangles); i++){
-//         printTriangle(*i);
-//     }
 
 
 return 0;
