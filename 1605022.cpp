@@ -195,12 +195,12 @@ void printBuffer()
         {
             if(zbuffer[i][j]<rear_limit_of_Z)
             {
-                cout<<zbuffer[i][j]<<" ";
+               // cout<<zbuffer[i][j]<<" ";
                 z_bufferfile<<zbuffer[i][j]<<" ";
             }
         }
         z_bufferfile<<endl;
-        cout<<endl;
+       // cout<<endl;
     }
 }
 
@@ -668,7 +668,7 @@ double ScanLineTriangleSideIntersect_X(struct Triangle T,int point1,int point2)
 
 void setColumnBoundaries(double xa,double xb,double xc,double za,double zb,double zc)
 {
-     if( xa>max_x_boundary || xa<min_x_boundary)
+     if( xa > max_x_boundary || xa < min_x_boundary)
      {
          if(xc < xb)
         {
@@ -689,7 +689,7 @@ void setColumnBoundaries(double xa,double xb,double xc,double za,double zb,doubl
 
      }
 
-     else if( xb>max_x_boundary || xb<min_x_boundary)
+    if( xb > max_x_boundary || xb < min_x_boundary)
      {
          if(xa < xc)
         {
@@ -710,7 +710,7 @@ void setColumnBoundaries(double xa,double xb,double xc,double za,double zb,doubl
 
      }
 
-     else 
+     if( xc > max_x_boundary || xc < min_x_boundary)
      {
          if(xa < xb)
         {
