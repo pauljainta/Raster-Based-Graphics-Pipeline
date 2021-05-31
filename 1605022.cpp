@@ -61,7 +61,7 @@ void skipNFileLines(int N)
 
 }
 
-class Color
+struct Color
 {
     public:
     double R,G,B;
@@ -202,6 +202,14 @@ void printBuffer()
         z_bufferfile<<endl;
        // cout<<endl;
     }
+
+    for (int i = 0; i < screen_height; i++)
+    {
+        delete[] zbuffer[i];
+    }
+
+    delete[] zbuffer;
+
 }
 
 struct point pointFromPointMatrix(struct point_matrix p)
@@ -537,10 +545,10 @@ void Zbuffer_init()
 void frame_buffer_init()
 {
 
-    cout<<"bal2"<<endl;
+    //cout<<"bal2"<<endl;
     frame_buffer=new Color*[(int)screen_height];
 
-    cout<<"bal3"<<endl;
+   // cout<<"bal3"<<endl;
 
     for(int i=0;i<(int)screen_height;i++)
     {
@@ -561,7 +569,7 @@ void frame_buffer_init()
         }
     }
 
-    cout<<"bal6"<<endl;
+    //cout<<"bal6"<<endl;
 
 }
 
@@ -889,6 +897,14 @@ void generateImage()
     }
 
     image.save_image("output.bmp");
+
+
+    for (int i = 0; i < screen_height; i++)
+    {
+        delete[] frame_buffer[i];
+    }
+
+    delete[] frame_buffer;
 
 }
 
